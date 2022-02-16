@@ -1,0 +1,47 @@
+pipeline {
+    
+    environment {
+            dockerimagename = "9354165450/nodeapp_test
+            dockerImage = ""
+    }
+
+    agent any
+    
+    stages {
+
+        stage ('gitclone') {
+            steps {
+                git 'https://github.com/arashforoughi/nodeapp_test'
+            }
+        }
+
+        stage ('Build') {
+            steps {
+                script {
+                    dockerImage = docker.build dockerimagename
+                }
+            }
+        }
+
+        stage ('Push') {
+            environment {
+                registryCredential = 'DockerHub'
+            }
+            steps {
+                script {
+                    docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
+                        dockerImage.push("latest")
+                    }
+                }
+            }
+        }
+
+        stage ('Deploying App to K8s') {
+            steps {
+                script {
+                    kubernetesDeploy(configs: "deploymentservice.yml", kubeconfigId: "kubernetes")
+                }
+            }
+        }
+    }
+}
