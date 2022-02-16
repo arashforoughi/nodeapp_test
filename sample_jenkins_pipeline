@@ -1,0 +1,41 @@
+pipeline {
+    
+    agent {label 'Linux'}
+    
+    environment {
+        DOCKERHUB_CREDENTIALS=credentials('DockerHub')
+    }
+
+    stages {
+
+        stage ('gitclone') {
+            steps {
+                git 'https://github.com/arashforoughi/nodeapp_test'
+            }
+        }
+
+        stage ('Build') {
+            steps {
+                sh 'docker build -t 9354165450/nodeapp_test .'
+            }
+        }
+
+        stage ('Login') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+
+        stage ('Push') {
+            steps {
+                sh 'docker push 9354165450/nodeapp_test:latest'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
+        }
+    }
+}
